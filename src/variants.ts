@@ -204,8 +204,8 @@ export function variantConfig(saasType: SaaS, businessName: string): StudioConfi
   // Clear irrelevant business fields
   const allFields = Object.keys(base.business) as (keyof typeof base.business)[];
   for (const field of allFields) {
-    if (typeof base.business[field] === "string") {
-      base.business[field] = "";
+    if (field !== "custom" && typeof base.business[field] === "string") {
+      (base.business[field] as any) = "";
     }
   }
 

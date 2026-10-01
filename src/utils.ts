@@ -113,7 +113,7 @@ export function defaultStudioConfig(): StudioConfig {
 export function sanitizeConfig(data: unknown): StudioConfig {
   const defaults = defaultStudioConfig();
   if (typeof data !== "object" || data === null) return defaults;
-  const obj = data as Record<string, unknown>;
+  const obj = data as any;
 
   return {
     identity: {
@@ -204,34 +204,34 @@ export function sanitizeConfig(data: unknown): StudioConfig {
           }))
       : defaults.rules,
     behavior: {
-      returningGreeting: typeof obj.behavior?.returningGreeting === "string" ? obj.behavior.returningGreeting.slice(0, 300) : defaults.behavior.returningGreeting,
-      afterHoursReply: Boolean(obj.behavior?.afterHoursReply),
-      afterHoursMessage: typeof obj.behavior?.afterHoursMessage === "string" ? obj.behavior.afterHoursMessage.slice(0, 500) : defaults.behavior.afterHoursMessage,
-      maxQuestions: typeof obj.behavior?.maxQuestions === "number" ? Math.max(1, Math.min(5, obj.behavior.maxQuestions)) : defaults.behavior.maxQuestions,
-      oneQuestionAtATime: Boolean(obj.behavior?.oneQuestionAtATime),
-      summarizeBeforeActing: Boolean(obj.behavior?.summarizeBeforeActing),
-      confidenceThreshold: typeof obj.behavior?.confidenceThreshold === "number" ? Math.max(0.5, Math.min(0.95, obj.behavior.confidenceThreshold)) : defaults.behavior.confidenceThreshold,
-      uncertainty: (["clarify", "handoff", "needs_confirmation"].includes(String(obj.behavior?.uncertainty)) ? obj.behavior.uncertainty : defaults.behavior.uncertainty) as any,
+      returningGreeting: typeof (obj.behavior as any)?.returningGreeting === "string" ? (obj.behavior as any).returningGreeting.slice(0, 300) : defaults.behavior.returningGreeting,
+      afterHoursReply: Boolean((obj.behavior as any)?.afterHoursReply),
+      afterHoursMessage: typeof (obj.behavior as any)?.afterHoursMessage === "string" ? (obj.behavior as any).afterHoursMessage.slice(0, 500) : defaults.behavior.afterHoursMessage,
+      maxQuestions: typeof (obj.behavior as any)?.maxQuestions === "number" ? Math.max(1, Math.min(5, (obj.behavior as any).maxQuestions)) : defaults.behavior.maxQuestions,
+      oneQuestionAtATime: Boolean((obj.behavior as any)?.oneQuestionAtATime),
+      summarizeBeforeActing: Boolean((obj.behavior as any)?.summarizeBeforeActing),
+      confidenceThreshold: typeof (obj.behavior as any)?.confidenceThreshold === "number" ? Math.max(0.5, Math.min(0.95, (obj.behavior as any).confidenceThreshold)) : defaults.behavior.confidenceThreshold,
+      uncertainty: (["clarify", "handoff", "needs_confirmation"].includes(String((obj.behavior as any)?.uncertainty)) ? (obj.behavior as any).uncertainty : defaults.behavior.uncertainty) as any,
     },
     actions: Object.fromEntries(
       Object.entries(defaults.actions).map(([k, v]) => [
         k,
-        PERMISSION_LEVELS.includes(obj.actions?.[k]) ? obj.actions[k] : v,
+        PERMISSION_LEVELS.includes((obj.actions as any)?.[k]) ? (obj.actions as any)[k] : v,
       ])
     ) as any,
     handoff: {
-      triggers: Array.isArray(obj.handoff?.triggers) ? obj.handoff.triggers.filter((t: unknown) => typeof t === "string") : defaults.handoff.triggers,
-      keywords: Array.isArray(obj.handoff?.keywords)
-        ? obj.handoff.keywords
+      triggers: Array.isArray((obj.handoff as any)?.triggers) ? (obj.handoff as any).triggers.filter((t: unknown) => typeof t === "string") : defaults.handoff.triggers,
+      keywords: Array.isArray((obj.handoff as any)?.keywords)
+        ? (obj.handoff as any).keywords
             .filter((k: unknown) => typeof k === "string")
             .slice(0, 40)
         : defaults.handoff.keywords,
-      assignTo: typeof obj.handoff?.assignTo === "string" ? obj.handoff.assignTo : null,
-      message: typeof obj.handoff?.message === "string" ? obj.handoff.message.slice(0, 300) : defaults.handoff.message,
+      assignTo: typeof (obj.handoff as any)?.assignTo === "string" ? (obj.handoff as any).assignTo : null,
+      message: typeof (obj.handoff as any)?.message === "string" ? (obj.handoff as any).message.slice(0, 300) : defaults.handoff.message,
     },
     training: {
-      examples: Array.isArray(obj.training?.examples)
-        ? obj.training.examples
+      examples: Array.isArray((obj.training as any)?.examples)
+        ? (obj.training as any).examples
             .filter((e: unknown) => typeof e === "object" && e !== null && "input" in e && "output" in e)
             .slice(0, 1000)
             .map((e: any) => ({
@@ -242,7 +242,7 @@ export function sanitizeConfig(data: unknown): StudioConfig {
         : defaults.training.examples,
     },
     settings: {
-      model: typeof obj.settings?.model === "string" ? obj.settings.model : defaults.settings.model,
+      model: typeof (obj.settings as any)?.model === "string" ? (obj.settings as any).model : defaults.settings.model,
     },
   };
 }
