@@ -2,6 +2,9 @@ export * from "./types";
 export * from "./utils";
 export * from "./variants";
 
+// Components (React)
+export * from "./components";
+
 // Re-export commonly used items for convenience
 export {
   defaultStudioConfig,
