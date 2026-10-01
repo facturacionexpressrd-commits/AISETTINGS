@@ -2,6 +2,7 @@ export * from "./types";
 export * from "./utils";
 export * from "./variants";
 export * from "./commands";
+export * from "./ai-parser";
 
 // Components (React)
 export * from "./components";

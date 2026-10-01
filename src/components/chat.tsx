@@ -27,6 +27,8 @@ export interface ChatControllerProps {
   height?: string;
   placeholder?: string;
   showTimestamp?: boolean;
+  anthropicApiKey?: string;
+  useLLMParsing?: boolean;
 }
 
 /**
@@ -73,6 +75,8 @@ export const ChatController = React.forwardRef<HTMLDivElement, ChatControllerPro
       height = '500px',
       placeholder = "Type your request... (Enter to send, Escape to clear)",
       showTimestamp = false,
+      anthropicApiKey,
+      useLLMParsing = true,
     },
     ref
   ) => {
@@ -114,8 +118,24 @@ export const ChatController = React.forwardRef<HTMLDivElement, ChatControllerPro
       try {
         let response = '';
 
-        // Try to parse as command
-        const command = parseCommandForVariant(input, saasType);
+        // Try to parse as command (LLM first, then regex fallback)
+        let command = null;
+        if (useLLMParsing && anthropicApiKey && saasType) {
+          // Use AI parser
+          const { parseMessage } = await import('../ai-parser');
+          const parsed = await parseMessage(input, saasType as any, config, {
+            apiKey: anthropicApiKey,
+            preferLLM: true,
+            minConfidence: 0.6,
+          });
+          if (parsed?.action) {
+            command = { type: parsed.action, params: parsed.params };
+          }
+        } else {
+          // Fall back to regex
+          command = parseCommandForVariant(input, saasType);
+        }
+
         if (command && onAction) {
           response = await onAction(command.type, command.params);
         } else if (onMessage) {
