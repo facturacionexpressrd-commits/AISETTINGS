@@ -7,20 +7,35 @@ import type { StudioConfig, Worker, PermissionKey } from "./types";
 import { WORKERS, PERMISSION_KEYS } from "./types";
 import { defaultStudioConfig } from "./utils";
 
-export type SaaS = "ecommerce" | "invoicing" | "booking" | "crm" | "marketplace" | "support" | "generic";
+export type SaaS =
+  | "ecommerce"
+  | "invoicing"
+  | "booking"
+  | "crm"
+  | "marketplace"
+  | "support"
+  | "leadgen"
+  | "whatsapp_omnichannel"
+  | "logistics"
+  | "fe_pos"
+  | "generic";
 
 /**
  * Worker sets per SaaS type
  * Only these workers are active by default
  */
 const VARIANT_WORKERS: Record<SaaS, string[]> = {
-  ecommerce: ["knowledge", "sales", "crm", "escalation"],          // catalog, orders, contacts, handoff
-  invoicing: ["knowledge", "crm", "escalation"],                   // docs, contacts, human
-  booking: ["knowledge", "scheduling", "crm", "escalation"],       // hours, calendar, contacts, handoff
-  crm: ["sales", "crm", "followup", "escalation"],                // leads, contacts, campaigns, handoff
-  marketplace: ["knowledge", "sales", "crm", "followup"],          // vendor info, matching, profiles, nurture
-  support: ["knowledge", "escalation"],                            // FAQs, handoff to agent
-  generic: ["knowledge", "sales", "crm", "followup", "escalation"], // all but payments
+  ecommerce: ["knowledge", "sales", "crm", "escalation"],
+  invoicing: ["knowledge", "crm", "escalation"],
+  booking: ["knowledge", "scheduling", "crm", "escalation"],
+  crm: ["sales", "crm", "followup", "escalation"],
+  marketplace: ["knowledge", "sales", "crm", "followup"],
+  support: ["knowledge", "escalation"],
+  leadgen: ["sales", "crm", "followup", "escalation"],            // qualify, score, nurture, handoff
+  whatsapp_omnichannel: ["knowledge", "sales", "crm", "escalation"],  // channel routing, contact sync, team
+  logistics: ["knowledge", "sales", "crm"],                        // tracking, shipments, customer service
+  fe_pos: ["knowledge", "sales", "crm", "escalation"],             // invoicing, compliance, customer service
+  generic: ["knowledge", "sales", "crm", "followup", "escalation"],
 };
 
 /**
@@ -34,6 +49,10 @@ const VARIANT_FIELDS: Record<SaaS, (keyof StudioConfig["business"])[]> = {
   crm: ["services", "emails", "phones", "departments"],
   marketplace: ["services", "products", "description", "website"],
   support: ["phones", "emails", "website", "emergencyInfo"],
+  leadgen: ["services", "description", "emails", "phones", "website"],
+  whatsapp_omnichannel: ["description", "phones", "emails", "website", "departments"],
+  logistics: ["services", "locations", "phones", "emails", "website", "description"],
+  fe_pos: ["description", "services", "pricing", "paymentMethods", "phones", "emails"],
   generic: ["description", "locations", "services", "products", "pricing", "phones", "emails", "website"],
 };
 
@@ -43,95 +62,59 @@ const VARIANT_FIELDS: Record<SaaS, (keyof StudioConfig["business"])[]> = {
  */
 const VARIANT_PERMISSIONS: Record<SaaS, Record<PermissionKey, "auto" | "confirm" | "approval" | "human" | "never">> = {
   ecommerce: {
-    answer_faqs: "auto",
-    provide_pricing: "auto",
-    qualify_leads: "confirm",
-    book_appointments: "never",
-    cancel_appointments: "never",
-    reschedule_appointments: "never",
-    create_contacts: "auto",
-    follow_up_leads: "confirm",
-    send_approved_links: "confirm",
-    transfer_to_employee: "approval",
-    take_orders: "approval",
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "confirm", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "confirm",
+    send_approved_links: "confirm", transfer_to_employee: "approval", take_orders: "approval",
   },
   invoicing: {
-    answer_faqs: "auto",
-    provide_pricing: "confirm",
-    qualify_leads: "never",
-    book_appointments: "never",
-    cancel_appointments: "never",
-    reschedule_appointments: "never",
-    create_contacts: "auto",
-    follow_up_leads: "never",
-    send_approved_links: "auto",
-    transfer_to_employee: "approval",
-    take_orders: "never",
+    answer_faqs: "auto", provide_pricing: "confirm", qualify_leads: "never", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "never",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "never",
   },
   booking: {
-    answer_faqs: "auto",
-    provide_pricing: "auto",
-    qualify_leads: "never",
-    book_appointments: "confirm",
-    cancel_appointments: "confirm",
-    reschedule_appointments: "confirm",
-    create_contacts: "auto",
-    follow_up_leads: "confirm",
-    send_approved_links: "auto",
-    transfer_to_employee: "approval",
-    take_orders: "never",
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "never", book_appointments: "confirm",
+    cancel_appointments: "confirm", reschedule_appointments: "confirm", create_contacts: "auto", follow_up_leads: "confirm",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "never",
   },
   crm: {
-    answer_faqs: "auto",
-    provide_pricing: "confirm",
-    qualify_leads: "auto",
-    book_appointments: "never",
-    cancel_appointments: "never",
-    reschedule_appointments: "never",
-    create_contacts: "auto",
-    follow_up_leads: "auto",
-    send_approved_links: "confirm",
-    transfer_to_employee: "approval",
-    take_orders: "never",
+    answer_faqs: "auto", provide_pricing: "confirm", qualify_leads: "auto", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "auto",
+    send_approved_links: "confirm", transfer_to_employee: "approval", take_orders: "never",
   },
   marketplace: {
-    answer_faqs: "auto",
-    provide_pricing: "auto",
-    qualify_leads: "auto",
-    book_appointments: "never",
-    cancel_appointments: "never",
-    reschedule_appointments: "never",
-    create_contacts: "auto",
-    follow_up_leads: "auto",
-    send_approved_links: "auto",
-    transfer_to_employee: "approval",
-    take_orders: "approval",
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "auto", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "auto",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "approval",
   },
   support: {
-    answer_faqs: "auto",
-    provide_pricing: "never",
-    qualify_leads: "never",
-    book_appointments: "never",
-    cancel_appointments: "never",
-    reschedule_appointments: "never",
-    create_contacts: "auto",
-    follow_up_leads: "never",
-    send_approved_links: "never",
-    transfer_to_employee: "approval",
-    take_orders: "never",
+    answer_faqs: "auto", provide_pricing: "never", qualify_leads: "never", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "never",
+    send_approved_links: "never", transfer_to_employee: "approval", take_orders: "never",
+  },
+  leadgen: {
+    answer_faqs: "auto", provide_pricing: "confirm", qualify_leads: "auto", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "auto",
+    send_approved_links: "confirm", transfer_to_employee: "approval", take_orders: "never",
+  },
+  whatsapp_omnichannel: {
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "confirm", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "auto",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "never",
+  },
+  logistics: {
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "never", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "confirm",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "never",
+  },
+  fe_pos: {
+    answer_faqs: "auto", provide_pricing: "auto", qualify_leads: "never", book_appointments: "never",
+    cancel_appointments: "never", reschedule_appointments: "never", create_contacts: "auto", follow_up_leads: "auto",
+    send_approved_links: "auto", transfer_to_employee: "approval", take_orders: "auto",
   },
   generic: {
-    answer_faqs: "auto",
-    provide_pricing: "confirm",
-    qualify_leads: "confirm",
-    book_appointments: "confirm",
-    cancel_appointments: "approval",
-    reschedule_appointments: "approval",
-    create_contacts: "auto",
-    follow_up_leads: "confirm",
-    send_approved_links: "confirm",
-    transfer_to_employee: "approval",
-    take_orders: "approval",
+    answer_faqs: "auto", provide_pricing: "confirm", qualify_leads: "confirm", book_appointments: "confirm",
+    cancel_appointments: "approval", reschedule_appointments: "approval", create_contacts: "auto", follow_up_leads: "confirm",
+    send_approved_links: "confirm", transfer_to_employee: "approval", take_orders: "approval",
   },
 };
 
@@ -175,6 +158,26 @@ const VARIANT_IDENTITY: Record<
     role: "Support Agent",
     greeting: "¡Hola! ¿Cómo puedo ayudarte?",
     description: "Soporte técnico y atención al cliente",
+  },
+  leadgen: {
+    role: "Sales Development Rep",
+    greeting: "¡Hola! ¿Tienes alguna oportunidad de negocio?",
+    description: "Calificación de leads y nurturing automático",
+  },
+  whatsapp_omnichannel: {
+    role: "Omnichannel Manager",
+    greeting: "Bienvenido al centro de mensajes unificado",
+    description: "Gestión de WhatsApp, Instagram, Messenger y más",
+  },
+  logistics: {
+    role: "Logistics Coordinator",
+    greeting: "¿Qué envío necesitas rastrear o gestionar?",
+    description: "Control de envíos, rutas y entregas",
+  },
+  fe_pos: {
+    role: "POS Manager",
+    greeting: "Sistema de punto de venta inteligente",
+    description: "Facturación, compliance DGII y analytics",
   },
   generic: {
     role: "Customer Assistant",
@@ -242,5 +245,9 @@ export const VARIANT_DESCRIPTIONS: Record<SaaS, string> = {
   crm: "Leads, sales pipeline, customer relationships, follow-up",
   marketplace: "Platform connecting buyers/sellers/vendors",
   support: "Help desk, FAQs, ticket routing, chat support",
+  leadgen: "Lead capture, qualification, scoring, nurture campaigns",
+  whatsapp_omnichannel: "Unified messaging across WhatsApp, Instagram, Messenger, SMS",
+  logistics: "Shipment tracking, delivery routing, fleet management",
+  fe_pos: "Point of sale, invoice generation, DGII compliance, local sales",
   generic: "All-purpose assistant (no strong domain)",
 };

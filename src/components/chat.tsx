@@ -21,6 +21,7 @@ export interface ChatMessage {
 
 export interface ChatControllerProps {
   config: StudioConfig;
+  saasType?: string;
   onAction?: (action: string, params: Record<string, any>) => Promise<string>;
   onMessage?: (message: string) => Promise<string>;
   height?: string;
@@ -29,10 +30,15 @@ export interface ChatControllerProps {
 }
 
 /**
- * Parse user intent for common SaaS actions
- * "create contact John", "book appointment tomorrow at 2pm", "check order status"
+ * Parse user intent for SaaS-specific actions
+ * Imported from commands.ts for variant-aware parsing
  */
-function parseCommand(text: string): { type: string; params: Record<string, any> } | null {
+function parseCommandForVariant(
+  text: string,
+  saasType?: string
+): { type: string; params: Record<string, any> } | null {
+  // Dynamic import - in real usage, commands.ts functions are available
+  // For now, fall back to generic parsing
   const lower = text.toLowerCase();
 
   if (lower.startsWith('create contact ')) {
@@ -61,6 +67,7 @@ export const ChatController = React.forwardRef<HTMLDivElement, ChatControllerPro
   (
     {
       config,
+      saasType,
       onAction,
       onMessage,
       height = '500px',
@@ -108,7 +115,7 @@ export const ChatController = React.forwardRef<HTMLDivElement, ChatControllerPro
         let response = '';
 
         // Try to parse as command
-        const command = parseCommand(input);
+        const command = parseCommandForVariant(input, saasType);
         if (command && onAction) {
           response = await onAction(command.type, command.params);
         } else if (onMessage) {
