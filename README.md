@@ -35,9 +35,65 @@ const userConfig = sanitizeConfig(req.body);
 const workers = getActiveWorkers(config);
 ```
 
-### React (UI Components)
+### React (Chat Controller + Level 1 Intent Parsing)
 
-Coming in v1.1. For now, copy the Studio components from SantoAI's `/src/app/(app)/ia/studio/` folder.
+```tsx
+import { ChatController } from "@aisettings/core/components/chat";
+import { variantConfig } from "@aisettings/core";
+
+export default function App() {
+  const config = variantConfig("ecommerce", "MyStore");
+
+  return (
+    <ChatController
+      config={config}
+      saasType="ecommerce"
+      anthropicApiKey={process.env.REACT_APP_ANTHROPIC_API_KEY}
+      useLLMParsing={true}  // Level 1: Claude API for natural language understanding
+      height="600px"
+    />
+  );
+}
+```
+
+**Level 1 enables natural language commands:**
+
+```
+User: "i need to bill acme 2.5k"
+AI:   ✅ Invoice created for acme - $2500
+
+Instead of: "create invoice for AcmeCorp - $2500"
+```
+
+See [LEVEL_1_SETUP.md](./LEVEL_1_SETUP.md) for full setup guide.
+
+## SaaS Variants
+
+**AISETTINGS adapts to 11 different SaaS business models.** Each comes with pre-configured workers, permissions, and intricate chat commands:
+
+- **leadgen** — Lead creation, scoring, campaign management, call scheduling
+- **whatsapp_omnichannel** — Message routing, broadcasts, contact sync, auto-replies
+- **ecommerce** — Products, inventory, orders, shipping, discounts, refunds
+- **logistics** — Shipments, tracking, driver assignment, route optimization
+- **fe_pos** — Dominican invoicing (NCF), DGII compliance, tax reporting, payments
+- **booking** — Appointments, resource availability, cancellations
+- **crm** — Contacts, deals, activities, follow-ups
+- **invoicing** — Invoice creation, payment tracking, reminders
+- **marketplace** — Vendor management, product listings, commission tracking
+- **support** — Tickets, knowledge base, escalations
+- **generic** — Custom business logic
+
+### Using Variants
+
+```typescript
+import { variantConfig, variantWorkers } from "@aisettings/core";
+
+// Get a config for your SaaS type
+const config = variantConfig("ecommerce", "MyStoreName");
+
+// Get active workers for this type
+const workers = variantWorkers("ecommerce");
+```
 
 ## Architecture
 
