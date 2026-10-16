@@ -17,12 +17,12 @@ npm install @aisettings/core
 ### TypeScript (Core Types)
 
 ```typescript
-import { 
-  StudioConfig, 
-  WORKERS, 
-  defaultStudioConfig, 
+import {
+  StudioConfig,
+  WORKERS,
+  defaultStudioConfig,
   sanitizeConfig,
-  getActiveWorkers 
+  getActiveWorkers
 } from "@aisettings/core";
 
 // Get a default config
@@ -94,6 +94,24 @@ const config = variantConfig("ecommerce", "MyStoreName");
 // Get active workers for this type
 const workers = variantWorkers("ecommerce");
 ```
+
+## Agent Presets
+
+AISETTINGS also provides selectable agent profiles that a SaaS or app can offer as implementation starting points. The first preset is **EcomOS Operator**, a commerce agent for product discovery and store operations. Its **Product Scout** capability researches and scores product opportunities so the owner can choose what to sell.
+
+```typescript
+import { AGENT_PRESETS, getAgentPreset } from "@aisettings/core";
+
+const availableAgents = AGENT_PRESETS;
+const ecomosOperator = getAgentPreset("ecomos_operator");
+
+// Render availableAgents in your app's agent picker.
+// Read ecomosOperator.capabilities to show the skills and approval defaults.
+```
+
+The preset describes capabilities, suggested integrations, and default permission levels. It does not connect to Shopify or execute actions by itself. The implementing app supplies its own tool adapters, enforces tenant and user authorization on the server, and requires approval for changes such as publishing products, changing inventory, placing supplier orders, issuing refunds, spending ad budget, or changing workspace settings.
+
+EcomOS Operator includes product research, catalog management, order operations, inventory and suppliers, marketing operations, store analytics, and workspace control. Apps can enable only the capabilities they support and map them to their own tools.
 
 ## Architecture
 
