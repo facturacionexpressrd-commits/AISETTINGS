@@ -3,6 +3,7 @@ export * from "./utils";
 export * from "./variants";
 export * from "./commands";
 export * from "./ai-parser";
+export * from "./agent-presets";
 
 // Components (React)
 export * from "./components";
