@@ -99,7 +99,7 @@ const workers = variantWorkers("ecommerce");
 
 AISETTINGS provides selectable commerce agent profiles that apps can use as implementation starting points:
 
-- **EcomOS Operator** — all-around store operations copilot
+- **EcomOS Operator** — full-scope SaaS operator spanning stores, products, orders, customers, suppliers, marketing, analytics, automations, integrations, billing visibility, team workflows, approvals, and platform operations
 - **EcomOS Product Scout** — product research, sourcing comparisons, and validation planning
 - **EcomOS Store Operations** — catalog, orders, inventory, and supplier workflows
 - **EcomOS Growth Marketer** — marketing analysis and approval-gated campaign proposals
@@ -116,9 +116,9 @@ const productScout = getAgentPreset("ecomos_product_scout");
 const capabilities = productScout?.capabilities;
 ```
 
-Agent presets now describe recommended workflows, data boundaries, tool adapters, required inputs, expected outputs, risk levels, and approval reasons. These fields are implementation guidance; they do not connect to Shopify, execute actions, authenticate users, or grant access.
+Agent presets now describe recommended workflows, data boundaries, tool adapters, required inputs, expected outputs, risk levels, approval reasons, and per-operation permission guidance. EcomOS Operator is designed for broad SaaS coverage, but a host can enable only the modules and tools it implements.
 
-The host app must supply tools and enforce tenant/store authorization, role checks, data minimization, input validation, rate limits, and approval records on the server. Keep external writes in draft until an authorized user approves the exact action and parameters. See [docs/AGENT_PRESETS.md](./docs/AGENT_PRESETS.md) for the capability map, workflows, and integration checklist.
+These fields are implementation guidance; they do not connect to Shopify, execute actions, authenticate users, or grant access. The host app must supply tools and enforce tenant/store authorization, role checks, data minimization, input validation, rate limits, and approval records on the server. Sensitive changes require approval; access ownership, secrets, security bypasses, self-approval, and permanent deletion are blocked or routed to dedicated human workflows. See [docs/AGENT_PRESETS.md](./docs/AGENT_PRESETS.md) for the domain map, workflows, and integration checklist.
 
 ## Architecture
 
