@@ -6,7 +6,7 @@ AISETTINGS presets are product and safety blueprints. They describe what an agen
 
 | Preset key | Best fit | Primary capabilities |
 | --- | --- | --- |
-| `ecomos_operator` | One assistant for a merchant's broader store workflow | Research, catalog, orders, inventory, marketing, analytics, customer care, workspace help |
+| `ecomos_operator` | One assistant for a merchant's connected EcomOS workspace | Research, catalog, products, orders, customers, inventory, marketing, analytics, automation, integrations, billing visibility, team workflows, approvals, and operations |
 | `ecomos_product_scout` | Decide which products to validate before investing | Product research, supplier comparison, unit economics, evidence-based ranking |
 | `ecomos_store_operations` | Handle daily catalog, order, and inventory work | Product edits and publish/unpublish, order exceptions, inventory risk, replenishment proposals |
 | `ecomos_growth_marketer` | Learn from store and campaign performance | Analytics, creative drafts, campaign experiments, budget-aware proposals |
@@ -24,6 +24,7 @@ Each capability can provide:
 - `risk`: a planning hint for product and security review.
 - `defaultPermission`: a recommended `PermissionLevel`, not authorization.
 - `approvalReason`: why the host should require review for consequential operations.
+- `operationPermissions`: per-operation recommendations when reading, drafting, and applying changes need different levels.
 
 A host should check that a capability's tools exist before showing it as active. Missing tools should produce a clear unavailable state, never a simulated success.
 
@@ -62,6 +63,8 @@ The host should define scoring weights and any merchant-specific thresholds. Do 
 | Editing product fields or publishing/unpublishing products | `approval` | Show a before-and-after diff; approve the exact product, fields or sales channels, and final values |
 | Inventory edits, order changes, customer messages, refunds, purchases, or ad spend | `approval` | Require an authorized human to approve the exact operation |
 | Changing security, user access, billing, integrations, or workspace-wide settings | `human` or `approval` | Use the host's dedicated high-risk workflow; do not allow generic natural-language execution |
+| Customer records, automations, operational retries, and agent configuration | `approval` or `human` | Limit the store/workspace scope, show exact impact, and require the correct authorized reviewer |
+| Approving the agent's own proposal, changing account ownership, accessing secrets, or disabling security controls | `never` | Block the operation and route to the host's owner/admin workflow
 
 Permission labels are recommendations. A host must translate them into its own policy checks and must fail closed when authorization cannot be verified.
 
@@ -73,8 +76,29 @@ Never allow a preset or model to:
 - Issue refunds, cancel or edit orders, send customer messages, publish or unpublish products, alter inventory, create purchase commitments, or spend advertising budget without host authorization and the required approval.
 - Permanently delete products through a general agent tool. Taking a product down should mean unpublishing it from explicitly selected sales channels; permanent deletion needs a separate host-admin workflow.
 - Change account access, security controls, billing, or integration credentials through an unrestricted tool.
+- Let the agent approve its own proposal, change organization ownership, access or rotate credentials, disable security controls, or permanently delete business records.
 - Run arbitrary SQL, shell commands, browser automation, or generic HTTP requests as a shortcut to a missing adapter.
 - Claim that an external action completed unless the host tool returned a verified success and the resulting state was checked.
+
+## Full-scope EcomOS operator
+
+The `ecomos_operator` preset composes specialist capabilities across the merchant workspace. A host may expose only the parts its backend actually implements.
+
+| Domain | Agent can help with | Default boundary |
+| --- | --- | --- |
+| Product catalog | Inspect, draft, edit, publish, and unpublish products | Exact before-and-after changes; approval for live edits and channel changes; no permanent deletion |
+| Orders and fulfillment | Find orders, explain exceptions, prepare actions | No cancellation, address change, refund, or customer message without approval |
+| Inventory and suppliers | Compare stock and offers, prepare replenishment | Purchase commitments and inventory writes require approval |
+| Customers | Search and summarize the minimum record, prepare tag/note updates | Minimize personal data; exports require human review; delete is blocked |
+| Marketing and analytics | Analyze metrics and prepare campaigns/content | Live publishing, targeting, and spend changes require approval |
+| Automations and agents | Inspect runs, prepare workflow/config drafts, propose retries | Validate and version drafts; approval before publishing, pausing, or retrying |
+| Integrations | Read connection state and prepare connection changes | OAuth credentials remain in host-controlled flows; secrets are never exposed to the model |
+| Team and access | Explain roles and prepare invitations or role changes | An authorized owner must finalize access changes; ownership changes are blocked |
+| Billing and usage | Explain plan, usage, and billing state | Plan/payment changes go through an authorized human and billing provider |
+| Approvals and exceptions | Summarize pending items, explain risks, draft resolution steps | The agent cannot approve or reject its own proposed action |
+| Platform operations | Read supported health and run status, prepare a scoped retry/pause | Approval and host runbooks required; security controls cannot be disabled |
+
+“Complete control” means broad operational coverage through named, auditable host tools. It does not mean arbitrary database access, unrestricted API calls, secrets access, or bypassing the host's role, approval, and billing policies.
 
 ## Data handling
 
