@@ -27,6 +27,8 @@ export type AgentPresetCapability = {
   risk?: AgentRiskLevel;
   /** Why a host should require review before executing a consequential action. */
   approvalReason?: string;
+  /** Suggested permission level by operation when reads and writes need different controls. */
+  operationPermissions?: Record<string, PermissionLevel>;
 };
 
 export type AgentPresetWorkflowStep = {
@@ -85,6 +87,7 @@ const catalogManagement: AgentPresetCapability = {
   outputs: ["Before-and-after field diff", "Validation warnings", "Reviewable change proposal", "Verified result after approved update"],
   risk: "medium",
   approvalReason: "Product edits affect customer-facing claims, pricing, search visibility, and revenue. Show the exact before-and-after change and apply it only after an authorized reviewer approves it.",
+  operationPermissions: { read: "auto", prepare_edit: "confirm", apply_approved_edit: "approval" },
 };
 
 const productPublishing: AgentPresetCapability = {
@@ -98,6 +101,7 @@ const productPublishing: AgentPresetCapability = {
   outputs: ["Current and proposed status per channel", "Availability and validation warnings", "Approval-ready publication change", "Verified status after approved action"],
   risk: "high",
   approvalReason: "Publishing or unpublishing changes customer access to a product and may affect revenue. Require approval for the exact product, channels, and requested status.",
+  operationPermissions: { read_status: "auto", prepare_change: "confirm", publish: "approval", unpublish: "approval" },
 };
 
 const orderOperations: AgentPresetCapability = {
@@ -177,6 +181,123 @@ const customerCare: AgentPresetCapability = {
   approvalReason: "Messages and customer account actions must follow the merchant's policies and privacy rules.",
 };
 
+const customerManagement: AgentPresetCapability = {
+  key: "customer_management",
+  name: "Customer Management",
+  description: "Find customer records and prepare policy-compliant updates to tags, notes, and segments using only data needed for the task.",
+  defaultPermission: "approval",
+  requiredTools: ["searchCustomers", "getCustomerSummary", "prepareCustomerUpdate", "applyApprovedCustomerUpdate"],
+  inputs: ["Authorized store and customer reference", "Requested field changes", "Relevant privacy and retention rules"],
+  outputs: ["Minimal customer summary", "Before-and-after change proposal", "Verified update result"],
+  risk: "high",
+  approvalReason: "Customer records can contain personal information. Minimize exposed fields and approve every write; deletion and bulk export use separate privacy workflows.",
+  operationPermissions: { search: "auto", view_minimal: "auto", prepare_update: "confirm", apply_update: "approval", bulk_export: "human", delete: "never" },
+};
+
+const automationManagement: AgentPresetCapability = {
+  key: "automation_management",
+  name: "Automation Management",
+  description: "Inspect scheduled workflows and prepare changes to their rules, schedule, scope, or enabled state.",
+  defaultPermission: "approval",
+  requiredTools: ["listAutomations", "getAutomationDetails", "prepareAutomationChange", "applyApprovedAutomationChange"],
+  inputs: ["Authorized workspace", "Automation identifier", "Requested trigger, schedule, scope, and outcome"],
+  outputs: ["Current and proposed configuration", "Affected stores and users", "Expected run behavior and rollback guidance"],
+  risk: "high",
+  approvalReason: "Automation changes can repeat actions or affect multiple stores and users; approve the exact configuration and scope.",
+  operationPermissions: { inspect: "auto", prepare_change: "confirm", apply_change: "approval", run_now: "approval", disable_security_controls: "never" },
+};
+
+const integrationManagement: AgentPresetCapability = {
+  key: "integration_management",
+  name: "Integration Management",
+  description: "Check connected service status and prepare connect, reconnect, or disconnect steps for supported integrations.",
+  defaultPermission: "approval",
+  requiredTools: ["listIntegrationStatus", "prepareIntegrationChange", "applyApprovedIntegrationChange"],
+  inputs: ["Authorized workspace and integration name", "Requested connection change", "Host-supported setup requirements"],
+  outputs: ["Connection status and scopes", "Data and feature impact", "Reviewable connection change or manual setup steps"],
+  risk: "high",
+  approvalReason: "Connecting or disconnecting services changes data access and can affect store operations. Credential exchange stays in the host's secure OAuth flow.",
+  operationPermissions: { inspect_status: "auto", prepare_change: "confirm", connect_or_disconnect: "approval", read_or_rotate_secret: "never" },
+};
+
+const teamAndAccessManagement: AgentPresetCapability = {
+  key: "team_and_access_management",
+  name: "Team and Access Management",
+  description: "Explain member roles and prepare invitations or access changes within the user's organization.",
+  defaultPermission: "human",
+  requiredTools: ["listWorkspaceMembers", "getRoleCapabilities", "prepareMemberInvite", "prepareRoleChange"],
+  inputs: ["Authorized organization and store scope", "Requested member or role", "Host-defined role capabilities"],
+  outputs: ["Current access summary", "Least-privilege proposal", "Invitation or role-change draft for an authorized owner"],
+  risk: "high",
+  approvalReason: "Access changes can expose business or customer data. Only an authorized owner should finalize invitations, role changes, or removals.",
+  operationPermissions: { list_members: "auto", explain_roles: "auto", prepare_invite: "confirm", invite_or_change_role: "human", remove_member: "human", change_owner: "never" },
+};
+
+const billingAndUsage: AgentPresetCapability = {
+  key: "billing_and_usage",
+  name: "Billing and Usage",
+  description: "Summarize plan, billing status, invoices, and product usage; prepare a plan or billing support request.",
+  defaultPermission: "human",
+  requiredTools: ["getBillingStatus", "getUsageSummary", "prepareBillingRequest"],
+  inputs: ["Authorized organization", "Requested billing period or plan question"],
+  outputs: ["Plan and usage summary with period", "Known charges and caveats", "Billing-change proposal or support handoff"],
+  risk: "high",
+  approvalReason: "Plan and payment changes have financial consequences and must be completed by an authorized human through the billing provider.",
+  operationPermissions: { read_plan_and_usage: "auto", prepare_request: "confirm", change_plan_or_payment: "human", issue_credit_or_refund: "never" },
+};
+
+const approvalsManagement: AgentPresetCapability = {
+  key: "approvals_management",
+  name: "Approval Queue",
+  description: "Summarize pending proposals, explain their scope and impact, and route them to an authorized human decision-maker.",
+  defaultPermission: "auto",
+  requiredTools: ["listPendingApprovals", "getApprovalDetails", "prepareApprovalSummary"],
+  inputs: ["Authorized store or organization", "Pending approval identifier"],
+  outputs: ["Action summary, requester, exact scope, risk, and missing evidence"],
+  risk: "medium",
+  approvalReason: "The agent must not approve or reject its own proposed actions; a human decision-maker owns the approval.",
+  operationPermissions: { list_and_explain: "auto", prepare_summary: "auto", approve_or_reject: "never" },
+};
+
+const exceptionManagement: AgentPresetCapability = {
+  key: "exception_management",
+  name: "Exceptions and Recovery",
+  description: "Review integration errors, fulfillment exceptions, and failed jobs; prepare a scoped resolution or retry.",
+  defaultPermission: "approval",
+  requiredTools: ["listOperationalExceptions", "getExceptionDetails", "prepareExceptionResolution", "applyApprovedExceptionResolution"],
+  inputs: ["Authorized store and exception identifier", "Relevant integration result and retry limits"],
+  outputs: ["Root-cause evidence", "Proposed resolution", "Retry impact and verification result"],
+  risk: "high",
+  approvalReason: "Retries and recovery actions may repeat external operations or change customer orders; review the exact action before execution.",
+  operationPermissions: { inspect: "auto", prepare_resolution: "confirm", retry_or_resolve: "approval", suppress_security_alert: "never" },
+};
+
+const platformOperations: AgentPresetCapability = {
+  key: "platform_operations",
+  name: "Platform Operations",
+  description: "Explain system health and agent-run status, and prepare scoped pause or retry actions for supported workflows.",
+  defaultPermission: "approval",
+  requiredTools: ["getAgentRunStatus", "getIntegrationHealth", "preparePlatformOperation"],
+  inputs: ["Authorized workspace", "Agent or job identifier", "Requested pause or retry action"],
+  outputs: ["Health and run summary", "Affected workflow scope", "Approval-ready operational proposal"],
+  risk: "high",
+  approvalReason: "Pausing or retrying platform workflows can interrupt service or repeat side effects; use host runbooks and approval checks.",
+  operationPermissions: { inspect_health: "auto", prepare_operation: "confirm", pause_or_retry: "approval", change_secrets_or_security: "never" },
+};
+
+const aiConfiguration: AgentPresetCapability = {
+  key: "ai_configuration",
+  name: "AI Configuration",
+  description: "Review agent instructions and enabled capabilities, then prepare a versioned draft configuration for authorized review.",
+  defaultPermission: "approval",
+  requiredTools: ["getAgentConfiguration", "prepareAgentConfigurationDraft", "validateAgentConfiguration"],
+  inputs: ["Authorized workspace and agent", "Requested behavior change", "Host-allowed model and tool options"],
+  outputs: ["Versioned draft", "Changed instructions and capabilities", "Validation and safety warnings"],
+  risk: "high",
+  approvalReason: "Agent configuration controls tools and behavior. Publish only validated drafts after approval; never broaden access beyond host policy.",
+  operationPermissions: { inspect_config: "auto", prepare_draft: "confirm", publish_config: "approval", grant_new_access: "never" },
+};
+
 const allEcomosCapabilities = [
   productScout,
   catalogManagement,
@@ -187,6 +308,15 @@ const allEcomosCapabilities = [
   storeAnalytics,
   workspaceControl,
   customerCare,
+  customerManagement,
+  automationManagement,
+  integrationManagement,
+  teamAndAccessManagement,
+  billingAndUsage,
+  approvalsManagement,
+  exceptionManagement,
+  platformOperations,
+  aiConfiguration,
 ];
 
 /** Reusable agent profiles for commerce SaaS products and apps. */
@@ -196,13 +326,14 @@ export const AGENT_PRESETS: AgentPreset[] = [
     name: "EcomOS Operator",
     category: "commerce",
     description:
-      "A store operations copilot that coordinates product research, catalog, orders, inventory, marketing, analytics, and supported workspace tasks. It should state what it can access and ask for approval before consequential changes.",
+      "A full-scope EcomOS operator for the merchant's connected stores. It can work across products, orders, customers, suppliers, marketing, analytics, automations, integrations, billing visibility, team workflows, approvals, and platform operations, using only the tools and permissions the host enables.",
     capabilities: allEcomosCapabilities,
     integrations: [
       "Shopify or another commerce platform",
       "Product research sources, supplier catalogs, or market data",
       "Optional advertising and analytics platforms",
       "Optional help desk or customer support platform",
+      "EcomOS workspace, billing, team, automation, and integration APIs exposed by the host",
     ],
     workflow: [
       { key: "understand", name: "Understand", description: "Identify the store, request, desired outcome, and relevant date range; clarify only details that block safe execution." },
@@ -229,6 +360,9 @@ export const AGENT_PRESETS: AgentPreset[] = [
       "Never publish products, place supplier orders, refund customers, cancel orders, send customer messages, spend ad budget, or change access/security settings without the required host authorization and approval.",
       "If a tool, integration, data source, or permission is unavailable, say so and offer a supported next step. Never imply an action was completed when it was only drafted.",
       "Return an audit-friendly summary of the requested action, approval, tool result, and outcome.",
+      "Use least privilege for every store and workspace; never infer access from a user's natural-language request.",
+      "The agent may prepare sensitive actions but must not approve its own proposals, change account ownership, manage secrets, bypass billing or security controls, or perform permanent deletion.",
+      "Billing changes, team role changes, cross-store bulk operations, customer exports, and automation changes require the host's dedicated authorized approval path.",
     ],
   },
   {
