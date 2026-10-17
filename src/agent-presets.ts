@@ -78,13 +78,26 @@ const catalogManagement: AgentPresetCapability = {
   key: "catalog_management",
   name: "Catalog Management",
   description:
-    "Inspect catalog quality and prepare product titles, descriptions, tags, collections, pricing proposals, and product drafts.",
+    "Review products, prepare edits and drafts, and apply approved changes to product details such as titles, descriptions, pricing, media, tags, and collections.",
   defaultPermission: "approval",
-  requiredTools: ["searchCatalog", "getProductDetails", "prepareProductDraft", "validateCatalogChanges"],
-  inputs: ["Authorized store catalog", "Brand voice and product facts", "Pricing and merchandising rules"],
-  outputs: ["Proposed field-by-field changes", "Validation warnings", "Draft ready for an authorized reviewer"],
+  requiredTools: ["searchCatalog", "getProductDetails", "prepareCatalogChange", "validateCatalogChanges", "applyApprovedCatalogChange"],
+  inputs: ["Authorized store and product identifier", "Current product data", "Requested field changes", "Brand voice and merchandising rules"],
+  outputs: ["Before-and-after field diff", "Validation warnings", "Reviewable change proposal", "Verified result after approved update"],
   risk: "medium",
-  approvalReason: "Changes can affect customer-facing claims, product availability, and revenue.",
+  approvalReason: "Product edits affect customer-facing claims, pricing, search visibility, and revenue. Show the exact before-and-after change and apply it only after an authorized reviewer approves it.",
+};
+
+const productPublishing: AgentPresetCapability = {
+  key: "product_publishing",
+  name: "Product Publishing",
+  description:
+    "Publish a product to selected sales channels or take it down by unpublishing it. The agent prepares the exact channel change and applies it only after authorized approval.",
+  defaultPermission: "approval",
+  requiredTools: ["getProductPublicationStatus", "preparePublicationChange", "validatePublicationChange", "applyApprovedPublicationChange"],
+  inputs: ["Authorized store and product identifier", "Current publication status per channel", "Requested publish or unpublish action", "Selected sales channels"],
+  outputs: ["Current and proposed status per channel", "Availability and validation warnings", "Approval-ready publication change", "Verified status after approved action"],
+  risk: "high",
+  approvalReason: "Publishing or unpublishing changes customer access to a product and may affect revenue. Require approval for the exact product, channels, and requested status.",
 };
 
 const orderOperations: AgentPresetCapability = {
@@ -167,6 +180,7 @@ const customerCare: AgentPresetCapability = {
 const allEcomosCapabilities = [
   productScout,
   catalogManagement,
+  productPublishing,
   orderOperations,
   inventoryAndSuppliers,
   marketingOperations,
@@ -210,6 +224,8 @@ export const AGENT_PRESETS: AgentPreset[] = [
       "Include product cost, shipping, fees, and estimated margin only when the connected data supports them; show missing inputs instead of inventing them.",
       "Require explicit host-app authorization for each store and tenant; a preset is descriptive metadata, never an access grant.",
       "Keep writes in draft until an authorized user approves the exact action and parameters through a host-enforced approval flow.",
+      "Allow product edits and publish/unpublish actions only through dedicated tools that require a host-issued approval for the exact product, fields or channels, and final values.",
+      "Taking a product down means unpublishing it from selected sales channels; do not permanently delete products through the agent.",
       "Never publish products, place supplier orders, refund customers, cancel orders, send customer messages, spend ad budget, or change access/security settings without the required host authorization and approval.",
       "If a tool, integration, data source, or permission is unavailable, say so and offer a supported next step. Never imply an action was completed when it was only drafted.",
       "Return an audit-friendly summary of the requested action, approval, tool result, and outcome.",
@@ -249,7 +265,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
     category: "commerce",
     description:
       "A day-to-day store assistant for catalog quality, order exceptions, inventory risks, and supplier replenishment proposals.",
-    capabilities: [catalogManagement, orderOperations, inventoryAndSuppliers, storeAnalytics],
+    capabilities: [catalogManagement, productPublishing, orderOperations, inventoryAndSuppliers, storeAnalytics],
     integrations: ["Shopify or another commerce platform", "Optional supplier or fulfillment system"],
     workflow: [
       { key: "scope", name: "Scope the task", description: "Identify the store, record or product, requested change, and relevant policies." },
@@ -263,7 +279,8 @@ export const AGENT_PRESETS: AgentPreset[] = [
       "Never use a supplier quote or inventory snapshot without its date and source.",
     ],
     guardrails: [
-      "Do not change customer-facing catalog content, order status, inventory, or supplier commitments without approval.",
+      "Do not change customer-facing catalog content, product publication status, order status, inventory, or supplier commitments without approval.",
+      "Treat taking down a product as unpublishing it from explicit sales channels; permanent deletion is not supported by this preset.",
       "Never infer that a shipment, refund, cancellation, or purchase order succeeded without a confirming host tool result.",
       "Show policy conflicts and missing data before requesting approval.",
     ],
