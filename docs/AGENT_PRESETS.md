@@ -8,7 +8,7 @@ AISETTINGS presets are product and safety blueprints. They describe what an agen
 | --- | --- | --- |
 | `ecomos_operator` | One assistant for a merchant's broader store workflow | Research, catalog, orders, inventory, marketing, analytics, customer care, workspace help |
 | `ecomos_product_scout` | Decide which products to validate before investing | Product research, supplier comparison, unit economics, evidence-based ranking |
-| `ecomos_store_operations` | Handle daily catalog, order, and inventory work | Catalog drafts, order exceptions, inventory risk, replenishment proposals |
+| `ecomos_store_operations` | Handle daily catalog, order, and inventory work | Product edits and publish/unpublish, order exceptions, inventory risk, replenishment proposals |
 | `ecomos_growth_marketer` | Learn from store and campaign performance | Analytics, creative drafts, campaign experiments, budget-aware proposals |
 | `ecomos_customer_care` | Help answer order and delivery questions | Policy-grounded response drafts, order lookup, human escalation |
 
@@ -59,7 +59,8 @@ The host should define scoring weights and any merchant-specific thresholds. Do 
 | --- | --- | --- |
 | Product research and aggregate analytics | `auto` | Permit read-only tools inside the authorized store and connected sources |
 | Drafting catalog content, campaign proposals, or customer replies | `confirm` or `approval` | Save drafts; do not publish or send automatically |
-| Publishing product changes, inventory edits, order changes, customer messages, refunds, purchases, or ad spend | `approval` | Require an authorized human to approve the exact operation |
+| Editing product fields or publishing/unpublishing products | `approval` | Show a before-and-after diff; approve the exact product, fields or sales channels, and final values |
+| Inventory edits, order changes, customer messages, refunds, purchases, or ad spend | `approval` | Require an authorized human to approve the exact operation |
 | Changing security, user access, billing, integrations, or workspace-wide settings | `human` or `approval` | Use the host's dedicated high-risk workflow; do not allow generic natural-language execution |
 
 Permission labels are recommendations. A host must translate them into its own policy checks and must fail closed when authorization cannot be verified.
@@ -69,7 +70,8 @@ Permission labels are recommendations. A host must translate them into its own p
 Never allow a preset or model to:
 
 - Access another tenant or store by changing an ID supplied in model output.
-- Issue refunds, cancel or edit orders, send customer messages, publish products, alter inventory, create purchase commitments, or spend advertising budget without host authorization and the required approval.
+- Issue refunds, cancel or edit orders, send customer messages, publish or unpublish products, alter inventory, create purchase commitments, or spend advertising budget without host authorization and the required approval.
+- Permanently delete products through a general agent tool. Taking a product down should mean unpublishing it from explicitly selected sales channels; permanent deletion needs a separate host-admin workflow.
 - Change account access, security controls, billing, or integration credentials through an unrestricted tool.
 - Run arbitrary SQL, shell commands, browser automation, or generic HTTP requests as a shortcut to a missing adapter.
 - Claim that an external action completed unless the host tool returned a verified success and the resulting state was checked.
