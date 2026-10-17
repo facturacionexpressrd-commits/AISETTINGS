@@ -97,21 +97,28 @@ const workers = variantWorkers("ecommerce");
 
 ## Agent Presets
 
-AISETTINGS also provides selectable agent profiles that a SaaS or app can offer as implementation starting points. The first preset is **EcomOS Operator**, a commerce agent for product discovery and store operations. Its **Product Scout** capability researches and scores product opportunities so the owner can choose what to sell.
+AISETTINGS provides selectable commerce agent profiles that apps can use as implementation starting points:
+
+- **EcomOS Operator** — full-scope SaaS operator spanning stores, products, orders, customers, suppliers, marketing, analytics, automations, integrations, billing visibility, team workflows, approvals, and platform operations
+- **EcomOS Product Scout** — product research, sourcing comparisons, and validation planning
+- **EcomOS Store Operations** — catalog, orders, inventory, and supplier workflows
+- **EcomOS Growth Marketer** — marketing analysis and approval-gated campaign proposals
+- **EcomOS Customer Care** — policy-grounded order support and reply drafts
 
 ```typescript
-import { AGENT_PRESETS, getAgentPreset } from "@aisettings/core";
+import { AGENT_PRESETS, getAgentPreset, listAgentPresets } from "@aisettings/core";
 
-const availableAgents = AGENT_PRESETS;
-const ecomosOperator = getAgentPreset("ecomos_operator");
+const availableAgents = listAgentPresets("commerce");
+const productScout = getAgentPreset("ecomos_product_scout");
 
-// Render availableAgents in your app's agent picker.
-// Read ecomosOperator.capabilities to show the skills and approval defaults.
+// Build a picker from preset names and descriptions.
+// Use capability inputs, outputs, and requiredTools to plan host integrations.
+const capabilities = productScout?.capabilities;
 ```
 
-The preset describes capabilities, suggested integrations, and default permission levels. It does not connect to Shopify or execute actions by itself. The implementing app supplies its own tool adapters, enforces tenant and user authorization on the server, and requires approval for changes such as publishing products, changing inventory, placing supplier orders, issuing refunds, spending ad budget, or changing workspace settings.
+Agent presets now describe recommended workflows, data boundaries, tool adapters, required inputs, expected outputs, risk levels, approval reasons, and per-operation permission guidance. EcomOS Operator is designed for broad SaaS coverage, but a host can enable only the modules and tools it implements.
 
-EcomOS Operator includes product research, catalog management, order operations, inventory and suppliers, marketing operations, store analytics, and workspace control. Apps can enable only the capabilities they support and map them to their own tools.
+These fields are implementation guidance; they do not connect to Shopify, execute actions, authenticate users, or grant access. The host app must supply tools and enforce tenant/store authorization, role checks, data minimization, input validation, rate limits, and approval records on the server. Sensitive changes require approval; access ownership, secrets, security bypasses, self-approval, and permanent deletion are blocked or routed to dedicated human workflows. See [docs/AGENT_PRESETS.md](./docs/AGENT_PRESETS.md) for the domain map, workflows, and integration checklist.
 
 ## Architecture
 
